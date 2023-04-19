@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "(lldb) Launch bare",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}/build/${fileBasenameNoExtension}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+    ],
+
+    "version": "2.0.0"
+}
