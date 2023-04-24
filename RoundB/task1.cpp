@@ -67,7 +67,7 @@ private:
     for (int A = La; A <= Ra; ++A) {
       int64_t scoreA{0};
       if (Lb < A && A < Rb) {
-        scoreA = std::min(P[A], S[A]);
+          scoreA = std::min(P[A], S[A]);
       } else if (A == Lb) {
         scoreA = P[A];
       } else if (A == Rb) {

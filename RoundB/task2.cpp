@@ -1,53 +1,65 @@
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <optional>
+#include <utility>
 #include <vector>
 
 #ifdef DEBUG_HACK
 #include "debug_hack.hpp"
 #endif
 
-// just need O(W) solution.
+// Size W string, chars [1-N], move takes single index and does +-N mod N.
+// 0 1 2 W=3 ; 0 1 2 3 W=4 ; look at 0<=i<W/2, compare A = X[i] with B =
+// X[W-1-i].
 
-// input W, N, D, size W (<= 1000) array X[i] of ints (1 <= X[i] <= N).
-// min number of operations to make X[i] palindromic (or IMPOSSIBLE).
+// for each pair (A, B) trying to move A and B (mod N) to a common value.
+// either move A forward to B (1), or move A backward to B. (2).
 
-// operation moves a SINGLE wheel up or down D (with wraparound).
+// (1): A + xD = B (mod N) -> Dx = (B - A) (mod N).
+// solution iff gcd(D, N) divides B - A.
 
-// odd/even W cases. 0 1 2 3 4 -> up to W/2. 0 1 2 3 -> up to W/2.
+// suspect test set 2 problem is overflow
 
-// converting to palindrome, can consider each pair independently.
-// X[0], X[N-1], want x = X[0] + kD = X[N-1] + k'D.
-// only possible if D divides X[N-1] - X[0].
-
-// there's no advantage in moving A and B to a common value, so just
-// move A onto B? can do this forward or backward.
-
-// A + xD = B (mod N), A - xD = B (mod N).
-// Dx + Ny = B - A, Ny - Dx = B - A.
-// answer (x, y) iff gcd(D, N) divides B - A, EA to get x in both cases.
-
-namespace {
 struct EA_result {
   int gcd;
-  int x;
-  int y;
+  int s;
+  int t;
 };
-// find d = gcd(a, b) and x, y with ax + by = d.
-EA_result euclidean_alg(int a, int b) {
+
+// a = qb + r, 0 <= r < b, return (q, r).
+std::pair<int, int> get_rem(int a, int b) {
+  int q = std::floor((double)a / b);
+  int r = a - q * b;
+  return {q, r};
+}
+
+// gcd = s*a + t*b
+EA_result extended_EA(int a, int b) {
+  struct EA_result res;
   int r_old{a}, s_old{1}, t_old{0};
   int r{b}, s{0}, t{1};
   while (r != 0) {
-    // not doing what expect.
-    int r_new = r_old % r;
-    int s_new = s_old % s;
-    int t_new = t_old % t;
-    r_old = r, r = r_new;
-    s_old = s, s = s_new;
-    t_old = t, t = t_new;
+    auto [Q, R] = get_rem(r_old, r);
+    int r_new{R}, s_new{s_old - Q * s}, t_new{t_old - Q * t};
+    r_old = r, s_old = s, t_old = t;
+    r = r_new, s = s_new, t = t_new;
   }
-  return {r_old, s_old, t_old};
+  res.gcd = r_old, res.s = s_old, res.t = t_old;
+  return res;
 }
-} // namespace
+
+// ax = b (mod n) solve for x.
+std::optional<int> solve_lcong(int a, int b, int n) {
+  EA_result ea_info{extended_EA(a, n)};
+  if (b % ea_info.gcd != 0) {
+    return std::nullopt;
+  }
+  int bp{b / ea_info.gcd}, np{n / ea_info.gcd};
+  auto [Q, R] = get_rem(ea_info.s * bp, np);
+  return R;
+}
 
 class case_loop {
 public:
@@ -56,10 +68,10 @@ public:
     std::cin >> T;
     for (int t = 1; t <= T; ++t) {
       read();
-      std::optional<int> nops{solve()};
-      std::cout << "Case #" << t << ": " << std::endl;
-      if (nops.has_value()) {
-        std::cout << nops.value() << std::endl;
+      std::optional<int64_t> res{solve()};
+      std::cout << "Case #" << t << ": ";
+      if (res.has_value()) {
+        std::cout << res.value() << std::endl;
       } else {
         std::cout << "IMPOSSIBLE" << std::endl;
       }
@@ -72,25 +84,21 @@ private:
     X.resize(W);
     for (int i = 0; i < W; ++i) {
       std::cin >> X[i];
-      --X[i];
     }
   }
-  std::optional<int> solve() {
-    int nops{0};
+  std::optional<int64_t> solve() {
+    int64_t nmove{0};
     for (int i = 0; i < W / 2; ++i) {
       int A{X[i]}, B{X[W - 1 - i]};
-      int gcd, a, b;
-      // horrible interface
-      euclidean_alg(gcd, a, b);
-      if ((B - A) % gcd != 0) {
+      std::optional<int> xfor_opt{solve_lcong(D, B - A, N)},
+          xback_opt{solve_lcong(D, A - B, N)};
+      if (!xfor_opt.has_value() || !xback_opt.has_value()) {
         return std::nullopt;
       }
+      int xfor{xfor_opt.value()}, xback{xback_opt.value()};
+      nmove += std::min(xfor, xback);
     }
-    return std::nullopt;
-  }
-  void euclidean_alg(int &gcd, int &a, int &b) {
-    return;
-    return;
+    return nmove;
   }
 
 private:
@@ -103,8 +111,6 @@ int main(int argc, char **argv) {
 #ifdef DEBUG_HACK
   dh::debug_hack(argv);
 #endif
-  EA_result res{euclidean_alg(8, 6)};
-  // integer division rounds TOWARDS 0.
-  std::cout << (-1) / 2 << std::endl;
-  std::cout << res.gcd << " " << res.x << " " << res.y << std::endl;
+  case_loop main_loop;
+  main_loop.read_and_solve();
 }
