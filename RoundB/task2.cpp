@@ -23,26 +23,26 @@
 // suspect test set 2 problem is overflow
 
 struct EA_result {
-  int gcd;
-  int s;
-  int t;
+  int64_t gcd;
+  int64_t s;
+  int64_t t;
 };
 
 // a = qb + r, 0 <= r < b, return (q, r).
-std::pair<int, int> get_rem(int a, int b) {
+std::pair<int64_t, int64_t> get_rem(int64_t a, int64_t b) {
   int q = std::floor((double)a / b);
   int r = a - q * b;
   return {q, r};
 }
 
 // gcd = s*a + t*b
-EA_result extended_EA(int a, int b) {
+EA_result extended_EA(int64_t a, int64_t b) {
   struct EA_result res;
-  int r_old{a}, s_old{1}, t_old{0};
-  int r{b}, s{0}, t{1};
+  int64_t r_old{a}, s_old{1}, t_old{0};
+  int64_t r{b}, s{0}, t{1};
   while (r != 0) {
     auto [Q, R] = get_rem(r_old, r);
-    int r_new{R}, s_new{s_old - Q * s}, t_new{t_old - Q * t};
+    int64_t r_new{R}, s_new{s_old - Q * s}, t_new{t_old - Q * t};
     r_old = r, s_old = s, t_old = t;
     r = r_new, s = s_new, t = t_new;
   }
@@ -51,12 +51,12 @@ EA_result extended_EA(int a, int b) {
 }
 
 // ax = b (mod n) solve for x.
-std::optional<int> solve_lcong(int a, int b, int n) {
+std::optional<int64_t> solve_lcong(int64_t a, int64_t b, int64_t n) {
   EA_result ea_info{extended_EA(a, n)};
   if (b % ea_info.gcd != 0) {
     return std::nullopt;
   }
-  int bp{b / ea_info.gcd}, np{n / ea_info.gcd};
+  int64_t bp{b / ea_info.gcd}, np{n / ea_info.gcd};
   auto [Q, R] = get_rem(ea_info.s * bp, np);
   return R;
 }
@@ -90,12 +90,12 @@ private:
     int64_t nmove{0};
     for (int i = 0; i < W / 2; ++i) {
       int A{X[i]}, B{X[W - 1 - i]};
-      std::optional<int> xfor_opt{solve_lcong(D, B - A, N)},
+      std::optional<int64_t> xfor_opt{solve_lcong(D, B - A, N)},
           xback_opt{solve_lcong(D, A - B, N)};
       if (!xfor_opt.has_value() || !xback_opt.has_value()) {
         return std::nullopt;
       }
-      int xfor{xfor_opt.value()}, xback{xback_opt.value()};
+      int64_t xfor{xfor_opt.value()}, xback{xback_opt.value()};
       nmove += std::min(xfor, xback);
     }
     return nmove;
