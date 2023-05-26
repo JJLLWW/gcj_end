@@ -1,9 +1,21 @@
-// is there some way a module can tell if it's been imported as a module?
+const process = require("process");
+
+async function ReadStdin() {
+    process.stdin.setEncoding("utf-8");
+    let all_input = "";
+    for await (const chunk of process.stdin) {
+        all_input += chunk;
+    }
+    return all_input;
+}
 
 if(require.main === module) {
-    console.log("CALLED DIRECTLY");
+    // read from stdin if called from top level node.
+    ReadStdin().then((text) => {
+        TaskMain(text);
+    });
 } else {
-    console.log("AS MODULE");
+    ;
 }
 
 function ReadInts(line) {
@@ -16,12 +28,11 @@ function ReadInts(line) {
 }
 
 function SolveCase(CaseData) {
-
+    ;
     return "IMPOSSIBLE";
 }
 
 function TaskMain(text) {
-    console.log(text);
     const lines = text.split("\n");
     const T = parseInt(lines[0], 10);
     for(let i=1, t=1; t <= T; ++t) {

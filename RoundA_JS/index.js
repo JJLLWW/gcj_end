@@ -1,11 +1,13 @@
 const fs = require("fs");
 const task1 = require("./task1");
 const task2 = require("./task2");
+const task3 = require("./task3");
 
 // must be better way.
 const tasks = new Array();
 tasks[0] = task1;
 tasks[1] = task2;
+tasks[2] = task3;
 
 async function DoTask(TaskID) {
     const TaskPath = `./task${TaskID}.txt`
@@ -15,7 +17,7 @@ async function DoTask(TaskID) {
 }
 
 async function main() {
-    DoTask(2);
+    DoTask(3);
 }
 
 main();
