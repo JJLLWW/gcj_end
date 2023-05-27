@@ -44,12 +44,10 @@ export class Tokeniser {
     tokenise(line : string) : Token[] {
         line = line.replace(this.Whitespace, "");
         if(!this.Valid.test(line)) {
-            // which character caused the problem? (for debugging).
             throw Error("line contains unexpected character");
         }
         const Nums = line.split(/[^0-9]+/);
         const NonNums = line.split(/[0-9]+/);
-        // validates num op num op ... op num.
         const NumTokens = this.processNums(Nums);
         const OpTokens = this.processNonNums(NonNums);
         let Tokens = [];
@@ -76,6 +74,22 @@ export class Tokeniser {
         if(NonNums[NonNums.length - 1] !== '') {
             throw Error("trailing operator");
         }
-        return [];
+        NonNums.shift(); // remove first elem
+        NonNums.pop(); // remove last elem.
+        let NonNumTokens : Token[] = [];
+        NonNums.forEach((nonnum : string) => {
+            if(nonnum.length > 1) {
+                throw Error("multi character operator not supported");
+            }
+            switch (nonnum[0]) {
+                case '+':
+                    const tok = new Token(TokenType.BinOp, BinOpType.Add);
+                    NonNumTokens.push(tok);
+                    break;
+                default:
+                    throw Error("unrecognised operator");
+            }
+        })
+        return NonNumTokens;
     }
 }
